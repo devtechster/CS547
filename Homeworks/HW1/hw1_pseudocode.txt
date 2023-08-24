@@ -1,0 +1,41 @@
+#Pseudo code for stemming fucntion :
+
+Initialize an empty list - "stemmed_tokens"
+Initialize a stemmer object using the PorterStemmer class
+Iterate through each single token from the input "tokens" list
+For each token, stem the token using the stemmer object and the "stem" method, passing in the token, 0, 
+and the length of the token-1 as arguments
+Append the stemmed token to the "stemmed_tokens" list
+Return the "stemmed_tokens" list
+
+
+Index directry pseudo code -
+Initialize a variable num_files_indexed to 0
+Use the glob library to get a list of all files with the ".txt" extension in the directory specified by base_path
+and all its subdirectories.
+Iterate through each file in the list
+a. Open the file and read its contents into a variable text
+b. Tokenize the text by calling the tokenize function and passing in text. Assign the returned list of tokens to a variable tokens
+c. Perform stemming on the tokens by calling the stemming function and passing in tokens. Assign the returned list of stemmed tokens to a variable stemmed_tokens
+d. Iterate through each stemmed token in stemmed_tokens
+i. Check if the token is already in the inverted index
+1. If it is not, add it to the inverted index with an empty list as its value
+2. If it is, add the current filename to the list of filenames associated with that token in the inverted index
+e. Increment the num_files_indexed variable
+Return the num_files_indexed variable
+
+
+Tokenization Pseudo code:---
+Initialize an empty list for "tokens"
+Convert the given contetn text to lowercase
+Iterate through each character in text
+a. If the character is an English alphabet or a numerical digit, add it to the current token
+[isalpha and isdigit will be used]
+b. If the character is not an English alphabet or numerical digit, add the current token to the list of tokens then
+  proceed with next tokden
+Add the final token to the list of tokens
+Return the list of tokens.
+
+
+
+

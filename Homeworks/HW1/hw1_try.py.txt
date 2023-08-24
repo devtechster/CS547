@@ -1,0 +1,186 @@
+# homework 1
+# goal: tokenize, index, boolean query
+# exports: 
+# student - a populated and instantiated ir4320.Student object
+# Index - a class which encapsulates the necessary logic for indexing and searching a corpus of text documents
+# ########################################
+# first, create a student object
+# ########################################
+
+import glob
+import os
+import cs547
+import PorterStemmer
+
+MY_NAME = "Adhiraj Nitin Budukh"
+MY_ANUM  = 901004534
+MY_EMAIL = "abudukh@wpi.edu"
+
+# the COLLABORATORS list contains tuples of 2 items, the name of the helper
+# and their contribution to your homework
+COLLABORATORS = ['NA']
+
+# Set the I_AGREE_HONOR_CODE to True if you agree with the following statement
+# "I do not lie, cheat or steal, or tolerate those who do."
+I_AGREE_HONOR_CODE = True
+
+# this defines the student object
+student = cs547.Student(
+    MY_NAME,
+    MY_ANUM,
+    MY_EMAIL,
+    COLLABORATORS,
+    I_AGREE_HONOR_CODE
+    )
+
+
+# our index class definition will hold all logic necessary to create and search
+# an index created from a directory of text files 
+class Index(object):
+    def __init__(self):
+        # _inverted_index contains terms as keys, with the values as a list of
+        # document indexes containing that term
+        self._inverted_index = {}
+        # _documents contains file names of documents
+        self._documents = []
+        # example:
+        #   given the following documents:
+        #     doc1 = "the dog ran"
+        #     doc2 = "the cat slept"
+        #   _documents = ['doc1', 'doc2']
+        #   _inverted_index = {
+        #      'the': [0,1],
+        #      'dog': [0],
+        #      'ran': [0],
+        #      'cat': [1],
+        #      'slept': [1]
+        #      }
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+    # index_dir( base_path )
+    # purpose: crawl through a nested directory of text files and generate and inverted index of the contents
+    # preconditions: none
+    # returns: num of documents indexed
+    # hint: glob.glob()
+    # parameters:base_path - a string containing a relative or direct path to a directory of text files to be indexed.
+
+    def index_dir(self, base_path):
+        num_files_indexed = 0
+            
+        for filename in glob.glob(os.path.join(base_path,'**/*.txt'), recursive=True):
+            print(filename)
+            with open(filename, 'r', encoding="utf8") as f:
+                text = f.read()
+            tokens = self.tokenize(text)
+            stemmed_tokens = self.stemming(tokens)                    
+            for single_token in stemmed_tokens:
+                if single_token not in self._inverted_index:
+                    self._inverted_index[single_token] = [num_files_indexed]
+                else:    
+                    if num_files_indexed not in self._inverted_index[single_token] :
+                        self._inverted_index[single_token].append(num_files_indexed)
+
+            num_files_indexed +=1
+        print('-------000000000---------')    
+        print(self._inverted_index)
+        return num_files_indexed
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+    # tokenize( text )
+    # purpose: convert a string of terms into a list of tokens.        
+    # convert the string of terms in text to lower case and replace each character in text, 
+    # which is not an English alphabet (a-z) and a numerical digit (0-9), with whitespace.
+    # preconditions: none
+    # returns: list of tokens contained within the text
+    # parameters:text - a string of terms.
+    
+    def tokenize(self, text):
+        tokens = []
+        current_token = ''
+        for content in text:
+            if content.isalpha() or content.isdigit():
+                current_token += content.lower()
+            else:
+                if current_token != '':
+                    tokens.append(current_token)
+                    current_token = ''
+        if current_token != '':
+            tokens.append(current_token)
+        return tokens
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+    # purpose: convert a string of terms into a list of tokens.        
+    # convert a list of tokens to a list of stemmed tokens,     
+    # preconditions: tokenize a string of terms
+    # returns: list of stemmed tokens
+    # parameters:tokens - a list of tokens.
+
+    def stemming(self, tokens):
+        stemmed_tokens = []
+        stemmer = PorterStemmer.PorterStemmer()           
+        for single_token in tokens:
+            stemmed_tokens.append(stemmer.stem(single_token,0,len(single_token)-1))
+        print('----',stemmed_tokens,'\n')           
+        return stemmed_tokens
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------#
+    # boolean_search( text )
+    # purpose: searches for the terms in "text" in our corpus using logical OR or logical AND. 
+    # If "text" contains only single term, search it from the inverted index. If "text" contains three terms including "or" or "and", 
+    # do OR or AND search depending on the second term ("or" or "and") in the "text".  
+    # preconditions: _inverted_index and _documents have been populated from the corpus.
+    # returns: list of document names containing relevant search results.
+    # parameters: text - a string of terms.
+    
+    def boolean_search(self, text):
+       individual_terms = text.split()
+       results = []
+
+       if len(individual_terms) == 1: 
+                #single term search
+                individual_term = individual_terms[0]
+                if individual_term in self._inverted_index:
+                    results = self._inverted_index[individual_term]
+       elif len(individual_terms) == 3 and (individual_terms[1] == 'or' or individual_terms[1] == 'and'):
+                # OR or AND search
+                left_term = individual_terms[0]
+                right_term = individual_terms[2]
+                if left_term in self._inverted_index and right_term in self._inverted_index:
+                    left_results = self._inverted_index[left_term]
+                    right_results = self._inverted_index[right_term]
+                    if individual_terms[1] == 'or':
+                        #union
+                        for doc_name in left_results:
+                            if doc_name not in results:
+                                results.append(doc_name)
+                        for doc_name in right_results:
+                            if doc_name not in results:
+                                results.append(doc_name)
+                    else:
+                        #intersection
+                        for doc_name in left_results:
+                            if doc_name in right_results:
+                                results.append(doc_name)
+       return results
+    
+
+# now, we'll define our main function which actually starts the indexer and
+# does a few queries
+def main(args):
+    print(student)
+    index = Index()
+    print("***STARTING INDEXER***")
+    num_files = index.index_dir("C:/Users/adhir/Documents/CS547/Assignment1/data")
+    print("indexed %d files" %num_files)
+    for term in ('football', 'mike', 'sherman', 'mike OR sherman', 'mike AND sherman'):
+        results = index.boolean_search(term)
+        print(results)
+#        print("searching: %s -- results: %s" % (term, ", ".join(results)))
+    print("-------------------------")
+
+# this little helper will call main() if this file is executed from the command
+# line but not call main() if this file is included as a module
+if __name__ == "__main__":
+    import sys
+    main(sys.argv)
+
